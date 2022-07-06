@@ -69,7 +69,7 @@ process run_method {
 // Fifth combine results
 process combine_results {
   publishDir params.result_dir, mode: "copy"
-  clusterOptions "-q short.q -l m_mem_free=16G -o \$HOME/output/\'\$JOB_NAME-\$JOB_ID-\$TASK_ID.log\' "
+  clusterOptions "-q short.q -l m_mem_free=32G -o \$HOME/output/\'\$JOB_NAME-\$JOB_ID-\$TASK_ID.log\' "
 
   output:
   file "$params.result_file_name" into collected_results_ch
