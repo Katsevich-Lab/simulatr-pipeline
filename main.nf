@@ -33,7 +33,7 @@ process run_benchmark {
 
     output:
     path "proc_id_info_${method}_${grid_row}.csv", emit: proc_id_info
-    path "benchmarking_info_${method}_${grid_row}.rds", emit: benchmarking_info
+    tuple val(method), val(grid_row), path("benchmarking_info_${method}_${grid_row}.rds"), emit: benchmarking_info
 
     script:
     """
@@ -50,7 +50,7 @@ process run_simulation_chunk {
     tuple val(method), val(grid_row), val(proc_id), val(n_processors)
 
     output:
-    path "chunk_result_${method}_${grid_row}_${proc_id}.rds", emit: chunk_result
+    tuple val(method), val(grid_row), path("chunk_result_${method}_${grid_row}_${proc_id}.rds"), emit: chunk_result
 
     script:
     """
@@ -59,23 +59,50 @@ process run_simulation_chunk {
 }
 
 process evaluate_methods {
-    tag "evaluate_methods"
+    tag "method: $method; grid row: $grid_row"
     maxRetries 6
     errorStrategy { task.exitStatus == 137 ? 'retry' : 'terminate' }
     memory { (Math.pow(2, task.attempt - 1) * 6).toInteger() + 'GB' }
     time { (Math.pow(2, task.attempt - 1) * 15).toInteger() + 'm' }
-    publishDir params.result_dir, mode: "copy"
 
     input:
-    path chunk_result
-    path benchmarking_info
+    tuple val(method), val(grid_row), path('chunk_result*.rds'), path(benchmarking_info)
 
     output:
-    path "$params.result_file_name", emit: final_results
+    path "${method}_${grid_row}_results.rds", emit: evaluation_results
 
     script:
     """
-    run_evaluation.R $params.simulatr_specifier_fp $params.result_file_name chunk_result* benchmarking_info*
+    run_evaluation.R $params.simulatr_specifier_fp $method $grid_row chunk_result* benchmarking_info*
+    """
+}
+
+process collect_results {
+    errorStrategy { task.exitStatus == 137 ? 'retry' : 'terminate' }
+    memory { (Math.pow(2, task.attempt - 1) * 6).toInteger() + 'GB' }
+    time { (Math.pow(2, task.attempt - 1) * 15).toInteger() + 'm' }
+
+    input:
+    path("*_results.rds")
+
+    publishDir params.result_dir, mode: "copy"
+
+    output:
+    path "$params.result_file_name"
+
+    script:
+    """
+    Rscript -e "
+    outputs_list <- list.files(pattern='*_results.rds') |> lapply(readRDS)
+    results <- lapply(outputs_list, function(output)(output\\\$results)) |> 
+        data.table::rbindlist() |>
+        dplyr::as_tibble()
+    metrics <- lapply(outputs_list, function(output)(output\\\$metrics)) |> 
+        data.table::rbindlist() |>
+        dplyr::as_tibble()
+    final_output <- list(results = results, metrics = metrics)
+    saveRDS(final_output, '${params.result_file_name}')
+    "
     """
 }
 
@@ -89,5 +116,11 @@ workflow {
 
     run_benchmark(method_cross_grid_row_ch)
     run_simulation_chunk(run_benchmark.out.proc_id_info.splitCsv())
-    evaluate_methods(run_simulation_chunk.out.chunk_result.collect(), run_benchmark.out.benchmarking_info.collect())
+
+    chunk_result_grouped = run_simulation_chunk.out.chunk_result.groupTuple(by: [0, 1])
+    benchmarking_info_grouped = run_benchmark.out.benchmarking_info
+    evaluate_input = chunk_result_grouped.join(benchmarking_info_grouped, by: [0, 1])
+
+    evaluation_results = evaluate_methods(evaluate_input).collect()
+    collect_results(evaluation_results)
 }

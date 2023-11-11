@@ -4,14 +4,15 @@ library(simulatr)
 # read command line arguments
 args <- commandArgs(trailingOnly = TRUE)
 simulatr_spec <- readRDS(args[1])
-result_file_name <- args[2]
-nextflow_res_filenames <- args[3:length(args)]
+method <- args[2]
+row_idx <- as.integer(args[3])
+nextflow_res_filenames <- args[4:length(args)]
 
 # extract command line arguments corresponding to simulation chunk results
 chunk_result_filenames <- nextflow_res_filenames[grepl("chunk_result", nextflow_res_filenames)]
 
 # extract command line arguments corresponding to benchmarking info
-benchmarking_info_filenames <- nextflow_res_filenames[grepl("benchmarking_info", nextflow_res_filenames)]
+benchmarking_info_filename <- nextflow_res_filenames[grepl("benchmarking_info", nextflow_res_filenames)]
 
 # read the simulation chunk results
 results <- lapply(X = chunk_result_filenames, FUN = readRDS) |>
@@ -19,8 +20,7 @@ results <- lapply(X = chunk_result_filenames, FUN = readRDS) |>
   dplyr::as_tibble()
 
 # read the benchmarking info
-benchmarking_info <- lapply(X = benchmarking_info_filenames, FUN = readRDS) |>
-  data.table::rbindlist() |>
+benchmarking_info <- readRDS(benchmarking_info_filename) |>
   dplyr::as_tibble()
 
 # join the results with the parameter grid
@@ -73,4 +73,5 @@ output <- list(
   results = results |> dplyr::select(method, grid_id, run_id, output),
   metrics = metrics
 )
-saveRDS(object = output, file = result_file_name)
+output_filename <- sprintf("%s_%d_results.rds", method, row_idx)
+saveRDS(object = output, file = output_filename)
