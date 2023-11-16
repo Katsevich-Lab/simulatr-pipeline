@@ -46,6 +46,9 @@ process run_simulation_chunk {
     memory "$params.max_gb GB"
     time "$params.max_hours h"
 
+    errorStrategy retry
+    maxRetries 6
+
     input:
     tuple val(method), val(grid_row), val(proc_id), val(n_processors)
 
