@@ -43,11 +43,17 @@ process run_benchmark {
 
 process run_simulation_chunk {
     tag "method: $method; grid row: $grid_row; processor: $proc_id"
-    memory "$params.max_gb GB"
-    time "$params.max_hours h"
-
     errorStrategy 'retry'
     maxRetries 6
+    memory { 
+        def mem = params.max_gb * Math.pow(2, task.attempt - 1)
+        return "${mem} GB"
+    }
+
+    time { 
+        def hours = params.max_hours * Math.pow(2, task.attempt - 1)
+        return "${hours} h"
+    }
 
     input:
     tuple val(method), val(grid_row), val(proc_id), val(n_processors)
