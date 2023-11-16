@@ -46,7 +46,7 @@ process run_simulation_chunk {
     memory "$params.max_gb GB"
     time "$params.max_hours h"
 
-    errorStrategy retry
+    errorStrategy 'retry'
     maxRetries 6
 
     input:
