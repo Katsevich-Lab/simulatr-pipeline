@@ -96,9 +96,16 @@ process evaluate_methods {
 }
 
 process collect_results {
-    errorStrategy { task.exitStatus == 137 ? 'retry' : 'terminate' }
-    memory { (Math.pow(2, task.attempt - 1) * 6).toInteger() + 'GB' }
-    time { (Math.pow(2, task.attempt - 1) * 15).toInteger() + 'm' }
+    errorStrategy 'retry'
+    maxRetries 6
+    memory { 
+        def mem = 6 * Math.pow(2, task.attempt - 1)
+        return "${mem} GB"
+    }
+    time { 
+        def minutes = 15 * Math.pow(2, task.attempt - 1)
+        return "${minutes} m"
+    }
 
     input:
     path("*_results.rds")
