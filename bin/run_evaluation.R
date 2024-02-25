@@ -43,26 +43,32 @@ if (length(simulatr_spec@evaluation_functions) > 0) {
     dplyr::group_by(grid_id, method, metric) |>
     dplyr::summarise(mean = mean(value), se = sd(value) / sqrt(dplyr::n()), .groups = "drop") |>
     dplyr::bind_rows(benchmarking_info |>
+      dplyr::rename(gb_per_rep = method_gb_per_rep, hrs_per_rep = method_hours_per_rep) |>
+      dplyr::select(method, grid_id, gb_per_rep, hrs_per_rep, n_processors) |>
       tidyr::pivot_longer(c(gb_per_rep, hrs_per_rep, n_processors),
         names_to = "metric",
         values_to = "mean"
       )) |>
-    dplyr::left_join(simulatr_spec@parameter_grid |>
-      dplyr::mutate(grid_id = dplyr::row_number()) |>
-      dplyr::select(-ground_truth),
-    by = "grid_id"
+    dplyr::left_join(
+      simulatr_spec@parameter_grid |>
+        dplyr::mutate(grid_id = dplyr::row_number()) |>
+        dplyr::select(-ground_truth),
+      by = "grid_id"
     ) |>
     dplyr::select(-grid_id) |>
     dplyr::relocate(method, metric, mean, se)
 } else {
   metrics <- benchmarking_info |>
+    dplyr::rename(gb_per_rep = method_gb_per_rep, hrs_per_rep = method_hours_per_rep) |>
+    dplyr::select(method, grid_id, gb_per_rep, hrs_per_rep, n_processors) |>
     tidyr::pivot_longer(c(gb_per_rep, hrs_per_rep, n_processors),
       names_to = "metric", values_to = "mean"
     ) |>
-    dplyr::left_join(simulatr_spec@parameter_grid |>
-      dplyr::mutate(grid_id = dplyr::row_number()) |>
-      dplyr::select(-ground_truth),
-    by = "grid_id"
+    dplyr::left_join(
+      simulatr_spec@parameter_grid |>
+        dplyr::mutate(grid_id = dplyr::row_number()) |>
+        dplyr::select(-ground_truth),
+      by = "grid_id"
     ) |>
     dplyr::select(-grid_id) |>
     dplyr::relocate(method, metric, mean)

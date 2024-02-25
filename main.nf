@@ -50,6 +50,31 @@ process run_benchmark {
     """
 }
 
+process collect_benchmarking_results {
+    errorStrategy { task.exitStatus == 137 ? 'retry' : 'terminate' }
+    memory { (Math.pow(2, task.attempt - 1) * 4).toInteger() + 'GB' }
+    time { (Math.pow(2, task.attempt - 1) * 15).toInteger() + 'm' }
+
+    input:
+    path(benchmarking_info)
+
+    publishDir params.result_dir, mode: "copy"
+
+    output:
+    path "benchmarking_results.rds"
+
+    script:
+    """
+    Rscript -e '
+    list.files() |> 
+      lapply(readRDS) |>
+      data.table::rbindlist() |>
+      dplyr::as_tibble() |>
+      saveRDS(file = "benchmarking_results.rds")
+    '
+    """
+}
+
 process run_simulation_chunk {
     tag "method: $method; grid row: $grid_row; processor: $proc_id"
     errorStrategy 'retry'
@@ -134,18 +159,27 @@ process collect_results {
 // Workflow definition
 
 workflow {
+    // Set up the simulation
     obtain_basic_info()
     method_names_ch = obtain_basic_info.out.method_names_raw.splitText().map{it.trim()}
     grid_rows_ch = obtain_basic_info.out.grid_rows_raw.splitText().map{it.trim()}
     method_cross_grid_row_ch = method_names_ch.combine(grid_rows_ch)
-
+    
+    // Run the benchmarking analysis to assess the time and memory required for each grid row
     run_benchmark(method_cross_grid_row_ch)
+    
+    // Collect benchmarking results for export
+    collect_benchmarking_results(run_benchmark.out.benchmarking_info.map{ it -> it[2] }.collect())
+
+    // Run simulation chunks for each method and grid row, parallelized based on benchmarking info    
     run_simulation_chunk(run_benchmark.out.proc_id_info.splitCsv())
 
+    // Evaluate the simulation results
     chunk_result_grouped = run_simulation_chunk.out.chunk_result.groupTuple(by: [0, 1])
     benchmarking_info_grouped = run_benchmark.out.benchmarking_info
     evaluate_input = chunk_result_grouped.join(benchmarking_info_grouped, by: [0, 1])
-
     evaluation_results = evaluate_methods(evaluate_input).collect()
+    
+    // Collect and export the results
     collect_results(evaluation_results)
 }
