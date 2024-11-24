@@ -5,6 +5,7 @@ params.B = 0
 params.B_check = 5
 params.max_gb = 8
 params.max_hours = 4
+params.benchmark_memory = 1
 
 // Define processes
 
@@ -46,7 +47,7 @@ process run_benchmark {
 
     script:
     """
-    run_benchmark.R $params.simulatr_specifier_fp $method $grid_row $params.B_check $params.B $params.max_gb $params.max_hours
+    run_benchmark.R $params.simulatr_specifier_fp $method $grid_row $params.B_check $params.B $params.max_gb $params.max_hours $params.benchmark_memory
     """
 }
 
