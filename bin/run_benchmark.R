@@ -11,6 +11,12 @@ B_check <- as.integer(args[4])
 B_in <- as.integer(args[5])
 max_gb <- as.numeric(args[6])
 max_hours <- as.numeric(args[7])
+benchmark_memory <- as.numeric(args[8])
+
+# disfunction memory computation if benchmark_memory is 0
+if(benchmark_memory == 0){
+  max_gb <- Inf
+}
 
 # set constants
 BYTES_PER_GB <- 2^30
