@@ -6,6 +6,7 @@ params.B_check = 5
 params.max_gb = 8
 params.max_hours = 4
 params.benchmark_memory = 1
+params.benchmark_memory_base = 4
 
 // Define processes
 
@@ -29,7 +30,7 @@ process run_benchmark {
     errorStrategy 'retry'
     maxRetries 6
     memory { 
-        def mem = 4 * Math.pow(2, task.attempt - 1)
+        def mem = params.benchmark_memory_base * Math.pow(2, task.attempt - 1)
         return "${mem} GB"
     }
 
