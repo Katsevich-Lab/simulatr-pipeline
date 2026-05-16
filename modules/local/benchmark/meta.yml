@@ -1,0 +1,20 @@
+name: benchmark
+description: |
+  OBTAIN_BASIC_INFO inspects the simulatr_study and emits the
+  cartesian product of (method, grid_row).
+  RUN_BENCHMARK runs simulatr_benchmark() on a single
+  (method, grid_row) and emits the per-replicate decomposed memory and
+  time numbers used by the simulation phase to size n_processors.
+output:
+  - proc_id_info:
+      type: file
+      description: CSV listing (method, grid_id, proc_id, n_processors).
+  - benchmarking_info:
+      type: file
+      description: RDS holding the decomposed per-rep memory/time tibble.
+  - error_json:
+      type: file
+      description: Optional sidecar with structured error info.
+  - memory_tsv:
+      type: file
+      description: Optional .command.memory.tsv (Layer-2 memory).

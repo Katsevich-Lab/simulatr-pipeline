@@ -1,0 +1,14 @@
+repository_type: pipeline
+nf_core_version: 3.0.2  # template version targeted; this layout was assembled by hand
+                       # because nf-core CLI was not available in the build environment.
+template:
+  name: simulatr
+  description: Run simulatr studies on Nextflow.
+  author: Eugene Katsevich
+  version: 1.0.0
+  prefix: katsevich-lab
+lint:
+  files_exist:
+    # Skipped because the manual scaffold does not yet include CODE_OF_CONDUCT.md,
+    # CHANGELOG entries, etc. Run `nf-core lint .` after installing the CLI.
+    - CODE_OF_CONDUCT.md

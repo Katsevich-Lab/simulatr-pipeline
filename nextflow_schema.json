@@ -1,0 +1,97 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/Katsevich-Lab/simulatr-pipeline/main/nextflow_schema.json",
+    "title": "simulatr-pipeline parameters",
+    "description": "Run a simulatr study on Nextflow.",
+    "type": "object",
+    "definitions": {
+        "input_output": {
+            "title": "Input / output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "required": ["simulatr_specifier_fp"],
+            "properties": {
+                "simulatr_specifier_fp": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the .rds file containing the simulatr_study object.",
+                    "fa_icon": "fas fa-file-import"
+                },
+                "result_dir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "default": ".",
+                    "description": "Directory into which results are published."
+                },
+                "result_file_name": {
+                    "type": "string",
+                    "default": "simulatr_result.rds",
+                    "description": "Name of the published combined result RDS."
+                }
+            }
+        },
+        "replication_options": {
+            "title": "Replication options",
+            "type": "object",
+            "properties": {
+                "B": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Override the study's B (0 = use the value baked into the study)."
+                },
+                "B_check": {
+                    "type": "integer",
+                    "default": 5,
+                    "description": "Number of replicates run during the benchmarking phase."
+                }
+            }
+        },
+        "resource_options": {
+            "title": "Per-task resource budget",
+            "type": "object",
+            "properties": {
+                "max_gb": {
+                    "type": "number",
+                    "default": 8,
+                    "description": "Maximum RAM (GB) per simulation chunk task."
+                },
+                "max_hours": {
+                    "type": "number",
+                    "default": 4,
+                    "description": "Maximum wall-clock (hours) per simulation chunk task."
+                },
+                "benchmark_memory": {
+                    "type": "integer",
+                    "enum": [0, 1],
+                    "default": 1,
+                    "description": "1 = benchmark and budget memory; 0 = skip memory budgeting (max_gb is treated as Inf)."
+                },
+                "benchmark_memory_base": {
+                    "type": "number",
+                    "default": 4,
+                    "description": "Memory floor (GB) for the benchmarking phase itself."
+                },
+                "R_SESSION_GB": {
+                    "type": "number",
+                    "default": 0.5,
+                    "description": "Constant RAM (GB) attributed to base R session overhead."
+                },
+                "GB_PROPORTION_USED": {
+                    "type": "number",
+                    "default": 0.9,
+                    "description": "Fraction of max_gb actually allotted to user code (1 - safety margin)."
+                },
+                "array_size": {
+                    "type": "integer",
+                    "default": 200,
+                    "description": "Maximum tasks per Slurm array submission for run_simulation_chunk and run_benchmark."
+                }
+            }
+        }
+    },
+    "allOf": [
+        {"$ref": "#/definitions/input_output"},
+        {"$ref": "#/definitions/replication_options"},
+        {"$ref": "#/definitions/resource_options"}
+    ]
+}

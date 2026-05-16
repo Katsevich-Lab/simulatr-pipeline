@@ -1,0 +1,16 @@
+name: simulate
+description: |
+  RUN_SIMULATION_CHUNK runs one shard of replicates for a given
+  (method, grid_row, processor). Uses simulatr_run() under the hood,
+  which interleaves generate -> run -> discard per replicate so peak
+  RSS scales with one draw rather than B draws.
+output:
+  - chunk_result:
+      type: file
+      description: RDS containing the partial simulatr_run() outputs.
+  - error_json:
+      type: file
+      description: Optional structured error sidecar.
+  - memory_tsv:
+      type: file
+      description: Optional Layer-2 .command.memory.tsv.

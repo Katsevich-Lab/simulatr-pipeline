@@ -1,0 +1,15 @@
+name: evaluate
+description: |
+  EVALUATE_METHODS fans out one task per (method, grid_row); each
+  task concatenates the chunk results, joins the benchmarking info,
+  and applies the study's metrics via simulatr_evaluate().
+output:
+  - evaluation_results:
+      type: file
+      description: RDS with results + evals + per-row benchmark numbers.
+  - error_json:
+      type: file
+      description: Optional structured error sidecar.
+  - memory_tsv:
+      type: file
+      description: Optional Layer-2 .command.memory.tsv.

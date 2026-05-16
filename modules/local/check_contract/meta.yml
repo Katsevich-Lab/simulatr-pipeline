@@ -1,0 +1,13 @@
+name: check_contract
+description: |
+  Read inst/extdata/contract.json from the installed simulatr package
+  and assert its schema_version matches what the pipeline was built
+  for. Fails the workflow before any data is generated if the
+  package and pipeline are mismatched.
+keywords:
+  - contract
+  - schema
+output:
+  - contract_check:
+      type: file
+      description: A text record of the asserted version.
