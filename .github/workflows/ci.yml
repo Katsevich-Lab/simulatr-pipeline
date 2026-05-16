@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - name: Install simulatr from GitHub (Phase 3 branch)
+        run: |
+          install.packages("remotes")
+          remotes::install_github("Katsevich-Lab/simulatr",
+                                  ref = "feat/phase3-vignettes-paper",
+                                  dependencies = TRUE,
+                                  upgrade = "never")
+          install.packages(c("arrow", "data.table"))
+        shell: Rscript {0}
+
+      - name: Build test fixture
+        run: Rscript tests/build_test_fixture.R
+
+      - uses: nf-core/setup-nextflow@v2
+        with:
+          version: "24.10.0"
+
+      - name: Run -profile test
+        run: |
+          nextflow run . -profile test --max_hours 0.05 2>&1 | tail -40
+
+      - name: Show published results
+        if: always()
+        run: |
+          ls -la results-test/ || true
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install nf-core
+        run: pip install nf-core
+      - name: nf-core lint
+        run: nf-core pipelines lint . || true  # informational for now
